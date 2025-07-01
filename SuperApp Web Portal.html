@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SuperApp Web Portal</title>
+    <!-- Use Tailwind CSS v3 script for modern utilities -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Font Awesome CSS for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Add Google Fonts for better typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Litepicker for Date Range -->
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        aside, #sidebar-backdrop { transition: all 0.3s ease-in-out; }
+        .card-enter { animation: card-enter 0.5s ease-out; }
+        @keyframes card-enter {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #chatbox { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
+        .service-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .service-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .sidebar-link.active { background-color: #3b82f6; color: white; }
+        .recipient-details, .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+        /* Styles for tracking */
+        .tracker-item { position: relative; display: flex; align-items: center; }
+        .tracker-line { flex-grow: 1; height: 2px; background-color: #e5e7eb; }
+        .tracker-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; z-index: 10; }
+        .tracker-item.completed .tracker-dot { background-color: #3b82f6; }
+        .tracker-item.completed .tracker-line { background-color: #3b82f6; }
+        .tracker-item.active .tracker-dot { background-color: #3b82f6; border: 4px solid #93c5fd; }
+        .tracker-item.pending .tracker-dot { background-color: #d1d5db; }
+        /* Profile picture upload style */
+        .profile-pic-wrapper { position: relative; cursor: pointer; }
+        .profile-pic-wrapper .upload-overlay { position: absolute; inset: 0; background-color: rgba(0,0,0,0.4); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%; opacity: 0; transition: opacity 0.3s; }
+        .profile-pic-wrapper:hover .upload-overlay { opacity: 1; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="flex h-screen flex-col md:flex-row">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-white w-64 p-4 flex-shrink-0 shadow-lg fixed md:static inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0">
+            <div class="flex items-center justify-center mb-6">
+                 <h1 class="text-2xl font-bold text-blue-600 hidden md:block">SuperApp</h1>
+            </div>
+            <nav id="sidebar-nav" class="space-y-2">
+                <button onclick="navigateTo('dashboard')" class="sidebar-link w-full text-left flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-500 hover:text-white focus:outline-none"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="ml-2">Dashboard</span></button>
+                <button onclick="navigateTo('services')" class="sidebar-link w-full text-left flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-500 hover:text-white focus:outline-none"><i class="fas fa-th-large w-6 text-center"></i><span class="ml-2">All Services</span></button>
+                <button onclick="navigateTo('transactions')" class="sidebar-link w-full text-left flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-500 hover:text-white focus:outline-none"><i class="fas fa-exchange-alt w-6 text-center"></i><span class="ml-2">Transactions</span></button>
+                <button onclick="navigateTo('international', 1)" class="sidebar-link w-full text-left flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-500 hover:text-white focus:outline-none"><i class="fas fa-globe w-6 text-center"></i><span class="ml-2">Intl. Transfer</span></button>
+                <button onclick="navigateTo('analytics')" class="sidebar-link w-full text-left flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-500 hover:text-white focus:outline-none"><i class="fas fa-chart-line w-6 text-center"></i><span class="ml-2">Analytics</span></button>
+                <button onclick="navigateTo('support')" class="sidebar-link w-full text-left flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-500 hover:text-white focus:outline-none"><i class="fas fa-headset w-6 text-center"></i><span class="ml-2">Support</span></button>
+                <button onclick="toggleSettingsModal(true)" class="sidebar-link w-full text-left flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-500 hover:text-white focus:outline-none"><i class="fas fa-user-cog w-6 text-center"></i><span class="ml-2">Settings</span></button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Navbar -->
+            <header class="hidden md:flex items-center justify-between bg-white px-6 py-4 shadow-md">
+                <div class="flex flex-col">
+                    <h1 id="header-title" class="text-2xl font-bold text-gray-800">Welcome, David Mbazza</h1>
+                    <p class="text-sm text-gray-500">Last Transaction: <span class="font-semibold">Airtime Purchase</span> - <span class="text-red-600 money-value" data-usd-value="10.00">$10.00</span></p>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <label for="currency-select" class="text-sm font-medium">Currency:</label>
+                        <select id="currency-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
+                            <option value="USD" selected>USD</option>
+                            <option value="TZS">TZS</option>
+                        </select>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-500">Available Balance</div>
+                        <div class="font-bold text-2xl text-green-600 money-value" data-usd-value="1250.00">$1,250.00</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl cursor-pointer" onclick="toggleSettingsModal(true)">DM</div>
+                </div>
+            </header>
+            <main class="p-4 md:p-6 lg:p-8 flex-1 overflow-auto" id="main-content"></main>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 p-4"><div class="bg-white w-full max-w-2xl p-6 rounded-xl shadow-2xl transform transition-all relative" id="settingsModalContent"></div></div>
+    
+    <!-- Quick Action Modal -->
+    <div id="quickActionModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white w-full max-w-lg p-6 rounded-xl shadow-2xl transform transition-all relative">
+            <button onclick="closeActionModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <div id="modal-content">
+                <!-- Dynamic content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbox -->
+    <div id="chatContainer" class="fixed bottom-5 right-5 z-50">
+        <div id="chatbox" class="bg-white w-80 h-96 rounded-xl shadow-2xl flex-col transform scale-0 opacity-0 origin-bottom-right hidden">
+            <div class="bg-blue-600 text-white p-3 flex justify-between items-center rounded-t-xl">
+                <h3 class="font-bold">Support Chat</h3>
+                <button id="closeChatBtn" class="text-white text-xl">&times;</button>
+            </div>
+            <div class="flex-1 p-4 text-sm text-gray-500">Welcome! How can we help you today?</div>
+            <div class="p-2 border-t"><input type="text" placeholder="Type a message..." class="w-full p-2 border rounded-lg"></div>
+        </div>
+        <button id="chatToggleBtn" class="bg-blue-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-2xl mt-4 ml-auto"><i class="fas fa-comment-dots"></i></button>
+    </div>
+
+    <script>
+        const TZS_RATE = 2580.50;
+        const TZS_TO_GBP_RATE = 0.00031;
+        const TRANSFER_FEE_TZS = 5000;
+        const SERVICE_FEES = {
+            'intl_transfer': { base: 5000, rate: 0.01 }, // Base fee + 1%
+            'bill_payment': { base: 500, rate: 0 },
+            'lipa': { base: 150, rate: 0 },
+            'cash_out': { base: 1000, rate: 0.005 }, // Base fee + 0.5%
+            'send_money': { base: 0, rate: 0 }
+        };
+
+        function updateCurrencyDisplay() {
+            const selectedCurrency = document.getElementById("currency-select")?.value || 'USD';
+            document.querySelectorAll('.money-value').forEach(el => {
+                const usdValue = parseFloat(el.dataset.usdValue);
+                if (isNaN(usdValue)) return;
+                el.textContent = selectedCurrency === 'TZS' 
+                    ? (usdValue * TZS_RATE).toLocaleString('en-US', { style: 'currency', currency: 'TZS', currencyDisplay: 'code' })
+                    : usdValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            });
+        }
+        
+        function checkFee() {
+            const serviceKey = document.getElementById('fee-service-select')?.value;
+            const amount = parseFloat(document.getElementById('fee-amount-input')?.value) || 0;
+            if (!serviceKey) return;
+            const service = SERVICE_FEES[serviceKey];
+            const fee = service.base + (amount * service.rate);
+            document.getElementById('fee-result').textContent = `${fee.toLocaleString()} TZS`;
+        }
+
+        function createTrackerHTML(activeStage = 1) {
+            const stages = ['Initiated', 'Processing', 'Sent', 'Completed'];
+            const icons = ['fa-check', 'fa-cogs', 'fa-paper-plane', 'fa-flag-checkered'];
+            let html = '<div class="flex justify-between items-start text-center text-xs sm:text-sm pt-8">';
+            stages.forEach((stage, index) => {
+                const state = index + 1 < activeStage ? 'completed' : (index + 1 === activeStage ? 'active' : 'pending');
+                const isLast = index === stages.length - 1;
+                html += `
+                    <div class="tracker-item ${state} ${isLast ? '' : 'flex-1'}">
+                        <div class="tracker-dot"><i class="fas ${icons[index]}"></i></div>
+                        ${!isLast ? '<div class="tracker-line"></div>' : ''}
+                        <div class="absolute -bottom-6 w-full text-center">${stage}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function openActionModal(action, stage = 1, title = '') {
+            const modal = document.getElementById('quickActionModal');
+            const contentContainer = document.getElementById('modal-content');
+            let content = '';
+
+            // Final Payment Process Flow Simulation
+            if (stage === 'confirm') {
+                content = `<h3 class="font-bold text-xl mb-4">Confirm Payment for ${title}</h3><p class="text-gray-600 mb-6">How would you like to pay?</p><div class="space-y-3"><button onclick="openActionModal('${action}', 'track', '${title}')" class="w-full p-3 bg-gray-100 rounded-lg hover:bg-gray-200">From Mobile Wallet</button><button onclick="openActionModal('${action}', 'track', '${title}')" class="w-full p-3 bg-gray-100 rounded-lg hover:bg-gray-200">From Bank</button><button onclick="openActionModal('${action}', 'track', '${title}')" class="w-full p-3 bg-gray-100 rounded-lg hover:bg-gray-200">From PayPal</button></div>`;
+            } else if (stage === 'track') {
+                content = `<h3 class="font-bold text-xl mb-4">${title} in Progress</h3>${createTrackerHTML(2)}<button onclick="closeActionModal()" class="mt-12 w-full py-3 bg-blue-600 text-white rounded-lg">Done</button>`;
+            } else {
+                switch(action) {
+                    case 'sendMoney':
+                        content = `<h3 class="font-bold text-xl mb-4">Send Money</h3><div class="space-y-4"><select class="w-full p-3 border rounded-lg"><option>Select Recipient Type</option><option>Mobile</option><option>Bank</option></select><input type="text" placeholder="Recipient Details (Number/Account)" class="w-full p-3 border rounded-lg"><input type="number" placeholder="Amount (TZS)" class="w-full p-3 border rounded-lg"><button onclick="openActionModal('sendMoney', 'confirm', 'Send Money')" class="w-full py-3 bg-blue-600 text-white rounded-lg">Continue</button></div>`;
+                        break;
+                    case 'payBill':
+                        content = `<h3 class="font-bold text-xl mb-4">Pay a Bill</h3><div class="space-y-4"><select class="w-full p-3 border rounded-lg"><option>Select Payment Type (e.g., LUKU)</option></select><input type="text" placeholder="Business Number" class="w-full p-3 border rounded-lg"><input type="number" placeholder="Amount (TZS)" class="w-full p-3 border rounded-lg"><button onclick="openActionModal('payBill', 'confirm', 'Bill Payment')" class="w-full py-3 bg-blue-600 text-white rounded-lg">Continue</button></div>`;
+                        break;
+                    case 'lipa':
+                         content = `<h3 class="font-bold text-xl mb-4">Lipa</h3><div class="space-y-4"><select class="w-full p-3 border rounded-lg"><option>Select Lipa Type (e.g., M-Pesa)</option></select><input type="text" placeholder="Lipa Number" class="w-full p-3 border rounded-lg"><input type="number" placeholder="Amount (TZS)" class="w-full p-3 border rounded-lg"><button onclick="openActionModal('lipa', 'confirm', 'Lipa Payment')" class="w-full py-3 bg-blue-600 text-white rounded-lg">Continue</button></div>`;
+                        break;
+                     case 'topUp':
+                         content = `<h3 class="font-bold text-xl mb-4">Top-up</h3><div class="space-y-4"><select class="w-full p-3 border rounded-lg"><option>Select Source (Bank, Agent, PayPal)</option></select><input type="text" placeholder="Source Details" class="w-full p-3 border rounded-lg"><input type="number" placeholder="Amount (TZS)" class="w-full p-3 border rounded-lg"><button onclick="openActionModal('topUp', 'track', 'Top-up')" class="w-full py-3 bg-blue-600 text-white rounded-lg">Top-up Now</button></div>`;
+                        break;
+                    case 'cashOut':
+                         content = `<h3 class="font-bold text-xl mb-4">Cash Out</h3><div class="space-y-4"><select class="w-full p-3 border rounded-lg"><option>Cash out to (Wakala, Bank)</option></select><input type="text" placeholder="Agent/Bank Details" class="w-full p-3 border rounded-lg"><input type="number" placeholder="Amount (TZS)" class="w-full p-3 border rounded-lg"><button onclick="openActionModal('cashOut', 'track', 'Cash Out')" class="w-full py-3 bg-blue-600 text-white rounded-lg">Get Cash Out Code</button></div>`;
+                        break;
+                    case 'wakalaProfile':
+                    case 'contactProfile':
+                        const { name, detail, rating } = stage;
+                        let stars = '';
+                        if (rating) {
+                            for(let i=0; i<5; i++) {
+                                stars += `<i class="fas fa-star ${i < rating ? 'text-yellow-400' : 'text-gray-300'}"></i>`;
+                            }
+                        }
+                        const iconClass = action === 'wakalaProfile' ? 'fa-user-tie' : 'fa-user';
+                        content = `<div class="text-center"><div class="w-24 h-24 rounded-full bg-blue-100 mx-auto flex items-center justify-center mb-4"><i class="fas ${iconClass} text-4xl text-blue-500"></i></div><h3 class="font-bold text-2xl">${name}</h3><p class="text-gray-500">${detail}</p>${rating ? `<div class="text-2xl my-4">${stars}</div>` : ''}<button onclick="closeActionModal()" class="mt-6 w-full py-3 bg-blue-600 text-white rounded-lg">Close</button></div>`;
+                        break;
+                    default:
+                        content = `<h3 class="font-bold text-xl mb-4">${title}</h3><p>This service flow for '${title}' would continue here.</p><button onclick="openActionModal('${action}', 'confirm', '${title}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-lg">Continue</button>`;
+                }
+            }
+            contentContainer.innerHTML = content;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeActionModal() {
+            const modal = document.getElementById('quickActionModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        
+        function toggleAccordion(element) {
+            const content = element.nextElementSibling;
+            const icon = element.querySelector('i.fa-chevron-down');
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                icon.classList.remove('rotate-180');
+            } else {
+                document.querySelectorAll('.accordion-content').forEach(el => el.style.maxHeight = null);
+                document.querySelectorAll('.accordion-header i.fa-chevron-down').forEach(el => el.classList.remove('rotate-180'));
+                content.style.maxHeight = content.scrollHeight + "px";
+                icon.classList.add('rotate-180');
+            }
+        }
+
+        function navigateTo(section, stage = 1) {
+            let content = '';
+            let pageTitle = section.charAt(0).toUpperCase() + section.slice(1);
+
+            document.querySelectorAll('#sidebar-nav .sidebar-link').forEach(link => link.classList.remove('active'));
+            const activeLink = document.querySelector(`#sidebar-nav button[onclick^="navigateTo('${section}')"]`);
+            if(activeLink) activeLink.classList.add('active');
+
+            switch(section) {
+                case 'dashboard':
+                    pageTitle = "Welcome, David Mbazza";
+                    content = `
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-lg card-enter">
+                                    <h3 class="font-bold text-lg mb-4">Quick Actions</h3>
+                                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                                        <button onclick="openActionModal('sendMoney')" class="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition"><i class="fas fa-paper-plane text-blue-500 text-2xl mb-2"></i><span class="text-sm font-semibold">Send Money</span></button>
+                                        <button onclick="openActionModal('payBill')" class="flex flex-col items-center justify-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition"><i class="fas fa-file-invoice-dollar text-green-500 text-2xl mb-2"></i><span class="text-sm font-semibold">Pay a Bill</span></button>
+                                        <button onclick="openActionModal('lipa')" class="flex flex-col items-center justify-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition"><i class="fas fa-money-bill-wave text-purple-500 text-2xl mb-2"></i><span class="text-sm font-semibold">Lipa</span></button>
+                                        <button onclick="openActionModal('topUp')" class="flex flex-col items-center justify-center p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition"><i class="fas fa-mobile-alt text-yellow-500 text-2xl mb-2"></i><span class="text-sm font-semibold">Top-up</span></button>
+                                        <button onclick="openActionModal('cashOut')" class="flex flex-col items-center justify-center p-3 bg-red-50 hover:bg-red-100 rounded-lg transition"><i class="fas fa-wallet text-red-500 text-2xl mb-2"></i><span class="text-sm font-semibold">Cash Out</span></button>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-lg card-enter service-card" style="animation-delay: 100ms;" onclick="navigateTo('transactions')">
+                                    <h3 class="font-bold text-lg mb-4">Recent Activity</h3>
+                                    <ul class="space-y-4">
+                                        <li class="flex items-center justify-between"><div class="flex items-center"><div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3"><i class="fas fa-arrow-down text-red-500"></i></div><div><p class="font-semibold">Netflix Subscription</p><p class="text-sm text-gray-500">Jul 1, 2025</p></div></div><span class="font-bold text-red-600 money-value" data-usd-value="15.99">-$15.99</span></li>
+                                        <li class="flex items-center justify-between"><div class="flex items-center"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3"><i class="fas fa-arrow-up text-green-500"></i></div><div><p class="font-semibold">Work Deposit</p><p class="text-sm text-gray-500">Jun 30, 2025</p></div></div><span class="font-bold text-green-600 money-value" data-usd-value="2500.00">+$2,500.00</span></li>
+                                        <li class="flex items-center justify-between"><div class="flex items-center"><div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3"><i class="fas fa-arrow-down text-red-500"></i></div><div><p class="font-semibold">Starbucks Coffee</p><p class="text-sm text-gray-500">Jun 29, 2025</p></div></div><span class="font-bold text-red-600 money-value" data-usd-value="5.75">-$5.75</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
+                                <div onclick="navigateTo('analytics')" class="bg-white p-6 rounded-xl shadow-lg card-enter service-card" style="animation-delay: 200ms;">
+                                    <h3 class="font-bold text-lg mb-4">Spending This Month</h3>
+                                    <div class="text-3xl font-bold text-blue-600 mb-2 money-value" data-usd-value="845.50">$845.50</div>
+                                    <p class="text-sm text-gray-500">+ <span class="money-value" data-usd-value="12.50">$12.50</span> in fees</p>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4"><div class="bg-blue-600 h-2.5 rounded-full" style="width: 65%"></div></div>
+                                </div>
+                                <div id="upcoming-bills-container" onclick="toggleSettingsModal(true)" class="bg-white p-6 rounded-xl shadow-lg card-enter service-card" style="animation-delay: 300ms;">
+                                    <h3 class="font-bold text-lg mb-4">Upcoming Bills</h3>
+                                    <ul id="upcoming-bills-list" class="space-y-3">
+                                        <li class="flex justify-between items-center"><p>Internet Bill</p><span class="font-semibold money-value" data-usd-value="50.00">$50.00</span></li>
+                                        <li class="flex justify-between items-center"><p>Water Bill</p><span class="font-semibold money-value" data-usd-value="25.00">$25.00</span></li>
+                                    </ul>
+                                </div>
+                                <div class="bg-blue-600 text-white p-6 rounded-xl shadow-lg card-enter" style="animation-delay: 400ms;">
+                                    <h3 class="font-bold text-lg mb-2">Special Offer!</h3>
+                                    <p class="text-sm">Get 50% off on your next international transfer. Use code: SUPER50</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'services':
+                    pageTitle = "All Services";
+                    const services = {
+                        "Financial Services": {
+                            "Loans & Savings": { icon: "fa-piggy-bank" },
+                            "Bank Services": { icon: "fa-university" },
+                            "Insurance": { icon: "fa-shield-alt" },
+                            "Virtual Card": { icon: "fa-credit-card" }
+                        },
+                        "Payments & Transfers": {
+                            "Remittance": { icon: "fa-globe-africa" },
+                            "Global Payments": { icon: "fa-plane-departure" },
+                            "Government Payments": { icon: "fa-landmark" },
+                            "Merchant Pay": { icon: "fa-store" }
+                        },
+                        "Daily Needs": {
+                            "Mobile Shop": { icon: "fa-mobile-alt" },
+                            "Bundle & Airtime": { icon: "fa-cubes" },
+                            "Ticketing & Booking": { icon: "fa-ticket-alt" },
+                            "Forex & Exchange": { icon: "fa-sync-alt" }
+                        },
+                        "Account & Rewards": {
+                            "Gamification": { icon: "fa-gamepad" }
+                        }
+                    };
+                    content = Object.entries(services).map(([category, items]) => `
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold mb-4 text-gray-800">${category}</h2>
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                                ${Object.entries(items).map(([title, data]) => `
+                                    <button onclick="navigateTo('services-detail', '${title}')" class="bg-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center text-center service-card">
+                                        <div class="text-blue-500 text-3xl mb-3"><i class="fas ${data.icon}"></i></div>
+                                        <h4 class="font-semibold text-gray-700">${title}</h4>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                    break;
+                case 'transactions':
+                    pageTitle = "Transactions";
+                    content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><div class="flex flex-wrap justify-between items-center mb-4 gap-4"><h3 class="font-bold text-lg">Transaction History</h3><div class="flex items-center space-x-2"><input type="text" id="datepicker" placeholder="Select date range" class="p-2 border rounded-lg"><button class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300">Filter</button><button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><i class="fas fa-print mr-2"></i>Print Statement</button></div></div><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="border-b"><th class="p-4">Date</th><th class="p-4">Description</th><th class="p-4">Amount</th><th class="p-4">Status</th></tr></thead><tbody><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jul 1, 2025</td><td class="p-4 font-semibold">Netflix Subscription</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="15.99">-$15.99</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 30, 2025</td><td class="p-4 font-semibold">Work Deposit</td><td class="p-4 font-semibold text-green-600 money-value" data-usd-value="2500.00">+$2,500.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 29, 2025</td><td class="p-4 font-semibold">Starbucks Coffee</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="5.75">-$5.75</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 28, 2025</td><td class="p-4 font-semibold">Transfer to Jane Doe</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="200.00">-$200.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Pending</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 27, 2025</td><td class="p-4 font-semibold">ATM Cash Out</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="100.00">-$100.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Failed</span></td></tr></tbody></table></div></div>`;
+                    break;
+                case 'analytics':
+                    pageTitle = "Analytics & Tariffs";
+                    content = `
+                        <div class="space-y-8">
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg card-enter">
+                                    <h3 class="font-bold text-lg mb-4">Weekly Spending</h3>
+                                    <div class="flex items-end justify-between h-48">
+                                        <div class="text-center w-1/4"><div class="bg-blue-200 rounded-t-lg" style="height: 50%"><span class="text-xs -mt-4 block">$210</span></div><p class="text-xs mt-1">Wk 1</p></div>
+                                        <div class="text-center w-1/4"><div class="bg-blue-500 rounded-t-lg" style="height: 80%"><span class="text-xs -mt-4 block">$350</span></div><p class="text-xs mt-1">Wk 2</p></div>
+                                        <div class="text-center w-1/4"><div class="bg-blue-200 rounded-t-lg" style="height: 60%"><span class="text-xs -mt-4 block">$280</span></div><p class="text-xs mt-1">Wk 3</p></div>
+                                        <div class="text-center w-1/4"><div class="bg-blue-200 rounded-t-lg" style="height: 40%"><span class="text-xs -mt-4 block">$190</span></div><p class="text-xs mt-1">Wk 4</p></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-lg card-enter flex flex-col justify-center">
+                                    <h3 class="font-bold text-lg mb-4">Income vs Expense</h3>
+                                    <div class="space-y-4">
+                                        <div><p class="text-sm text-gray-500">Total Income</p><p class="font-bold text-2xl text-green-600 money-value" data-usd-value="2500.00">$2,500.00</p></div>
+                                        <div><p class="text-sm text-gray-500">Total Expenses</p><p class="font-bold text-2xl text-red-600 money-value" data-usd-value="845.50">$845.50</p></div>
+                                        <hr>
+                                        <div><p class="text-sm text-gray-500">Net Balance</p><p class="font-bold text-2xl text-blue-600 money-value" data-usd-value="1654.50">$1,654.50</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div class="bg-white p-6 rounded-xl shadow-lg card-enter">
+                                    <h3 class="font-bold text-lg mb-4">Frequent Contacts</h3>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <button onclick="openActionModal('contactProfile', {name: 'Jane Doe', detail: '+255 712 987 654'})" class="text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200"><strong>Jane Doe</strong><br><span class="text-xs text-gray-500">Send Money Again</span></button>
+                                        <button onclick="openActionModal('contactProfile', {name: 'John Smith', detail: 'CRDB Bank - **** 1234'})" class="text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200"><strong>John Smith</strong><br><span class="text-xs text-gray-500">Send Money Again</span></button>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-lg card-enter">
+                                    <h3 class="font-bold text-lg mb-4">Frequent Agents (Wakala)</h3>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <button onclick="openActionModal('wakalaProfile', {name: 'Wakala Kariakoo', location: 'Kariakoo, Dar es Salaam', rating: 5})" class="text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200"><strong>Wakala Kariakoo</strong><br><span class="text-xs text-gray-500">Cash In/Out</span></button>
+                                        <button onclick="openActionModal('wakalaProfile', {name: 'Wakala Mbezi', location: 'Mbezi Beach, Dar es Salaam', rating: 4})" class="text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200"><strong>Wakala Mbezi</strong><br><span class="text-xs text-gray-500">Cash In/Out</span></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-lg card-enter">
+                                <h3 class="font-bold text-lg mb-4">Tariff Check</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Amount (TZS)</label>
+                                        <input id="fee-amount-input" type="number" placeholder="Enter amount" class="w-full p-2 border rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Service</label>
+                                        <select id="fee-service-select" class="w-full p-2 border rounded-lg">
+                                            <option value="send_money">Send Money</option>
+                                            <option value="cash_out">Withdraw (Wakala)</option>
+                                            <option value="intl_transfer">International Transfer</option>
+                                            <option value="bill_payment">Bill Payment</option>
+                                            <option value="lipa">Lipa</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-4">
+                                    <button onclick="checkFee()" class="bg-blue-500 text-white px-6 py-2 rounded-lg">Check Fee</button>
+                                    <p class="mt-4">Calculated Fee: <span id="fee-result" class="font-bold text-xl text-blue-600">0 TZS</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'support':
+                    pageTitle = "Customer Support";
+                    content = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-lg mb-4">Frequently Asked Questions</h3><div class="space-y-3"><details class="group"><summary class="flex justify-between items-center font-semibold cursor-pointer p-3 rounded-lg hover:bg-gray-100"><span>How do I reset my password?</span><i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i></summary><p class="text-gray-600 mt-2 px-3 pb-3">You can reset your password by going to the login page and clicking "Forgot Password". You will receive an email with instructions.</p></details><details class="group"><summary class="flex justify-between items-center font-semibold cursor-pointer p-3 rounded-lg hover:bg-gray-100"><span>What are the transaction fees?</span><i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i></summary><p class="text-gray-600 mt-2 px-3 pb-3">Fees vary by service and amount. You can use the Tariff Check tool in the Analytics section for precise calculations. Generally, sending money to other SuperApp users is free.</p></details><details class="group"><summary class="flex justify-between items-center font-semibold cursor-pointer p-3 rounded-lg hover:bg-gray-100"><span>How long do international transfers take?</span><i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i></summary><p class="text-gray-600 mt-2 px-3 pb-3">Most transfers to mobile wallets are instant. Bank transfers can take between 1-3 business days depending on the recipient's bank.</p></details></div></div><div class="bg-white p-6 rounded-xl shadow-lg card-enter" style="animation-delay: 100ms;"><h3 class="font-bold text-lg mb-4">Contact Support</h3><p class="text-gray-600 mb-4">If you can't find the answer, please reach out to us.</p><form class="space-y-4"><input type="text" placeholder="Your Name" class="w-full p-3 border rounded-lg" value="David Mbazza"><textarea placeholder="Describe your issue..." class="w-full p-3 border rounded-lg h-24"></textarea><button class="w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Submit Ticket</button></form></div></div>`;
+                    break;
+                case 'international':
+                    pageTitle = "International Money Transfer";
+                    if (stage === 1) {
+                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-4">Send Money Globally</h3><p class="text-gray-600 mb-6">Transfer funds from Tanzania to the United Kingdom.</p><form class="space-y-4" onsubmit="return false;"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block mb-1 text-sm font-medium">You Send (TZS)</label><input type="number" id="amount-tzs" placeholder="e.g., 250,000" class="w-full p-3 border rounded-lg" oninput="calculateTransfer()"></div><div><label class="block mb-1 text-sm font-medium">Recipient Gets (approx.)</label><input type="text" id="recipient-gets" placeholder="0.00 GBP" class="w-full p-3 border rounded-lg bg-gray-100" disabled></div></div><p class="text-sm text-gray-500">Exchange Rate: 1 GBP ≈ ${(1/TZS_TO_GBP_RATE).toLocaleString()} TZS | Fee: <span id="transfer-fee">0 TZS</span></p><div><label class="block mb-2 text-sm font-medium">How should they receive it?</label><div class="flex space-x-4"><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="bank" onchange="handleDeliveryMethodChange('bank')" class="mr-2"> To a Bank Account</label><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="mobile" onchange="handleDeliveryMethodChange('mobile')" class="mr-2"> To a Mobile Wallet</label></div></div><div id="bank-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Bank Account Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="text" placeholder="IBAN" class="w-full p-3 border rounded-lg"><input type="text" placeholder="SWIFT/BIC Code" class="w-full p-3 border rounded-lg"></div><div id="mobile-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Mobile Wallet Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="tel" placeholder="Recipient Mobile Number (e.g., +44...)" class="w-full p-3 border rounded-lg"></div><button onclick="navigateTo('international', 2)" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg">Continue Transfer</button></form></div><div class="mt-8 bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-6">Track Your Transfer</h3><div class="flex justify-between items-center text-center text-xs sm:text-sm pt-8"><div class="tracker-item completed flex-1"><div class="tracker-dot"><i class="fas fa-check"></i></div><div class="tracker-line"></div><div class="absolute -bottom-6">Initiated</div></div><div class="tracker-item active flex-1"><div class="tracker-dot"><i class="fas fa-cogs"></i></div><div class="tracker-line"></div><div class="absolute -bottom-6 font-bold">Processing</div></div><div class="tracker-item pending flex-1"><div class="tracker-dot"><i class="fas fa-paper-plane"></i></div><div class="tracker-line"></div><div class="absolute -bottom-6">Sent</div></div><div class="tracker-item pending"><div class="tracker-dot"><i class="fas fa-flag-checkered"></i></div><div class="absolute -bottom-6">Completed</div></div></div></div><div class="mt-8 bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-4">Recent International Transfers</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="border-b"><th class="p-3">Date</th><th class="p-3">Recipient</th><th class="p-3">Country</th><th class="p-3">Amount Sent</th><th class="p-3">Status</th></tr></thead><tbody><tr class="border-b hover:bg-gray-50"><td class="p-3 text-sm">25 Jun 2025</td><td class="p-3 font-semibold">John Smith</td><td class="p-3 text-sm">UK</td><td class="p-3 font-semibold">516,100 TZS</td><td class="p-3"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-3 text-sm">15 May 2025</td><td class="p-3 font-semibold">Jane Doe</td><td class="p-3 text-sm">UK</td><td class="p-3 font-semibold">1,290,250 TZS</td><td class="p-3"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr></tbody></table></div></div>`;
+                    } else if (stage === 2) {
+                        const data = getTransferData();
+                        const amountNum = parseFloat(data.amount) || 0;
+                        const feeNum = TRANSFER_FEE_TZS;
+                        const totalNum = amountNum + feeNum;
+                        const receivedNum = amountNum * TZS_TO_GBP_RATE;
+                        pageTitle = "Confirm Your Transfer";
+                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter max-w-2xl mx-auto"><h3 class="font-bold text-2xl mb-2 text-center">Confirm & Send</h3><p class="text-gray-600 mb-6 text-center">Please review the details below before confirming.</p><div class="bg-gray-50 p-4 rounded-lg space-y-3"><div class="flex justify-between"><dt class="text-gray-600">You are sending:</dt><dd class="font-bold text-lg">${amountNum.toLocaleString()} TZS</dd></div><div class="flex justify-between"><dt class="text-gray-600">Transfer Fee:</dt><dd class="font-semibold">+ ${feeNum.toLocaleString()} TZS</dd></div><hr><div class="flex justify-between"><dt class="text-gray-600">Total to Pay:</dt><dd class="font-bold text-xl text-blue-600">${totalNum.toLocaleString()} TZS</dd></div></div><div class="mt-6"><h4 class="font-semibold mb-2">Recipient Details</h4><dl class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm"><div class="flex justify-between"><dt class="text-gray-600">Name:</dt><dd class="font-semibold">${data.recipientName || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Receives (approx.):</dt><dd class="font-semibold">${receivedNum.toFixed(2)} GBP</dd></div><div class="flex justify-between"><dt class="text-gray-600">Delivery Method:</dt><dd class="font-semibold">${data.deliveryMethod || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Account/Mobile:</dt><dd class="font-semibold">${data.recipientDetail || 'N/A'}</dd></div></dl></div><div class="mt-6 flex space-x-4"><button onclick="navigateTo('international', 1)" class="w-full py-3 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold">Go Back</button><button class="w-full py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold">Confirm & Send</button></div></div>`;
+                    }
+                    break;
+                case 'services-detail':
+                    pageTitle = stage;
+                    content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h2 class="text-2xl font-bold mb-4">${stage}</h2><p>Detailed content and forms for the '${stage}' service would appear here, followed by the standard payment process flow.</p><button onclick="openActionModal('default', 'confirm', '${stage}')" class="mt-4 w-full py-3 bg-blue-600 text-white rounded-lg">Initiate Service</button></div>`;
+                    break;
+            }
+
+            document.getElementById('main-content').innerHTML = content;
+            document.getElementById('header-title').textContent = pageTitle;
+            updateCurrencyDisplay(); 
+
+            if (section === 'analytics') {
+                checkFee(); // Initial check for analytics page
+            }
+            if (section === 'transactions') {
+                new Litepicker({ element: document.getElementById('datepicker'), singleMode: false });
+            }
+        }
+
+        function toggleSettingsModal(show) {
+            const settingsModal = document.getElementById('settingsModal');
+            const settingsModalContent = document.getElementById('settingsModalContent');
+            if (show && !settingsModalContent.innerHTML) {
+                settingsModalContent.innerHTML = `
+                    <button onclick="toggleSettingsModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                    <div class="flex flex-col md:flex-row items-center md:space-x-6 mb-6">
+                        <div class="profile-pic-wrapper mb-4 md:mb-0" onclick="document.getElementById('profilePicInput').click()">
+                            <div class="w-24 h-24 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-4xl">DM</div>
+                            <div class="upload-overlay"><i class="fas fa-camera text-2xl"></i></div>
+                            <input type="file" id="profilePicInput" class="hidden" accept="image/*">
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 text-center md:text-left">David Mbazza</h2>
+                            <p class="text-gray-500 text-center md:text-left">david@example.com</p>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Personal Information</h3>
+                            <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+                                <div class="flex justify-between text-sm"><span class="text-gray-600">Phone:</span><strong>+255 712 345 678</strong></div>
+                                <div class="flex justify-between text-sm"><span class="text-gray-600">Joined:</span><strong>15 Jan 2022</strong></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Linked Accounts</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                    <div class="flex items-center"><i class="fas fa-wallet text-blue-500 mr-3"></i><span>SuperApp Wallet</span></div>
+                                    <span class="text-sm font-semibold text-green-600">Active</span>
+                                </div>
+                                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                    <div class="flex items-center"><i class="fab fa-cc-visa text-purple-600 mr-3"></i><span>Visa **** 4242</span></div>
+                                    <button class="text-xs text-red-500">Unlink</button>
+                                </div>
+                                <button class="w-full flex items-center justify-center py-2 border-2 border-dashed rounded-lg text-gray-500 hover:bg-gray-100">
+                                    <i class="fas fa-plus mr-2"></i> Add New Account
+                                </button>
+                            </div>
+                        </div>
+                         <div>
+                            <h3 class="font-semibold text-lg mb-2">Manage Upcoming Bills</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg"><p>Internet Bill</p><button class="text-xs text-red-500">Remove</button></div>
+                                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg"><p>Water Bill</p><button class="text-xs text-red-500">Remove</button></div>
+                                <input type="text" placeholder="Bill Name (e.g., Rent)" class="w-full p-2 border rounded-lg">
+                                <input type="number" placeholder="Amount (TZS)" class="w-full p-2 border rounded-lg">
+                                <button class="w-full py-2 bg-green-500 text-white rounded-lg">Add Bill</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button onclick="toggleSettingsModal(false)" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancel</button>
+                        <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Changes</button>
+                    </div>
+                `;
+            }
+            settingsModal.classList.toggle("hidden", !show);
+            settingsModal.classList.toggle("flex", show);
+        }
+
+        // --- Event Listeners and Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector(".md\\:hidden.flex.justify-between.items-center.bg-white.shadow-md.px-4.py-3.z-30 > button")?.addEventListener("click", () => document.getElementById("sidebar").classList.toggle("-translate-x-full"));
+            
+            const chatbox = document.getElementById("chatbox");
+            const chatToggleBtn = document.getElementById("chatToggleBtn");
+            const closeChatBtn = document.getElementById("closeChatBtn");
+
+            chatToggleBtn.addEventListener("click", () => {
+                chatbox.classList.remove("hidden");
+                setTimeout(() => {
+                    chatbox.classList.remove("scale-0", "opacity-0");
+                    chatbox.classList.add("scale-100", "opacity-100");
+                }, 10);
+            });
+
+            closeChatBtn.addEventListener("click", () => {
+                chatbox.classList.add("scale-0", "opacity-0");
+                chatbox.classList.remove("scale-100", "opacity-100");
+                setTimeout(() => chatbox.classList.add("hidden"), 300);
+            });
+
+            document.getElementById("currency-select")?.addEventListener("change", updateCurrencyDisplay);
+            navigateTo('dashboard');
+        });
+    </script>
+</body>
+</html>
