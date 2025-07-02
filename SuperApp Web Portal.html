@@ -42,9 +42,9 @@
         .profile-pic-wrapper:hover .upload-overlay { opacity: 1; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
 
-    <div class="flex h-screen flex-col md:flex-row">
+    <div class="flex flex-1 flex-col md:flex-row">
         <!-- Sidebar -->
         <aside id="sidebar" class="bg-white w-64 p-4 flex-shrink-0 shadow-lg fixed md:static inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0">
             <div class="flex items-center justify-center mb-6">
@@ -88,6 +88,43 @@
         </div>
     </div>
     
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white p-8">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="font-bold text-lg mb-4">SuperApp</h3>
+                <p class="text-gray-400 text-sm">Your all-in-one financial portal.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg mb-4">Special Links</h3>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white">Contact</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white">FAQ</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg mb-4">Follow Us</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f fa-lg"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter fa-lg"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram fa-lg"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in fa-lg"></i></a>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg mb-4">Developer</h3>
+                <p class="text-gray-400 text-sm">Developed by 
+                    <button onclick="openActionModal('developerProfile')" class="font-semibold text-blue-400 hover:text-blue-300">David Mbazza</button>
+                </p>
+            </div>
+        </div>
+        <div class="mt-8 border-t border-gray-700 pt-4 text-center text-gray-500 text-sm">
+            &copy; 2025 SuperApp. All Rights Reserved.
+        </div>
+    </footer>
+    
     <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 p-4"><div class="bg-white w-full max-w-2xl p-6 rounded-xl shadow-2xl transform transition-all relative" id="settingsModalContent"></div></div>
     
@@ -115,18 +152,26 @@
     </div>
 
     <script>
-        const TZS_RATE = 2580.50;
-        const TZS_TO_GBP_RATE = 0.00031;
-        const TRANSFER_FEE_TZS = 5000;
+        const TZS_RATE = 2580.50; // USD to TZS
+        const RATES = {
+            'USD_GBP': 0.79,
+            'USD_KES': 130.50,
+            'USD_TZS': 2580.50,
+            'TZS_GBP': 0.00031,
+            'TZS_KES': 0.050,
+            'TZS_USD': 1 / 2580.50,
+        };
+        const TRANSFER_FEE_USD = 2.0;
+
         const SERVICE_FEES = {
-            'intl_transfer': { base: 5000, rate: 0.01 }, // Base fee + 1%
+            'intl_transfer': { base: 5000, rate: 0.01 }, // Base fee + 1% in TZS
             'bill_payment': { base: 500, rate: 0 },
             'lipa': { base: 150, rate: 0 },
-            'cash_out': { base: 1000, rate: 0.005 }, // Base fee + 0.5%
+            'cash_out': { base: 1000, rate: 0.005 }, // Base fee + 0.5% in TZS
             'send_money': { base: 0, rate: 0 }
         };
 
-        function updateCurrencyDisplay() {
+        window.updateCurrencyDisplay = function() {
             const selectedCurrency = document.getElementById("currency-select")?.value || 'USD';
             document.querySelectorAll('.money-value').forEach(el => {
                 const usdValue = parseFloat(el.dataset.usdValue);
@@ -137,7 +182,7 @@
             });
         }
         
-        function checkFee() {
+        window.checkFee = function() {
             const serviceKey = document.getElementById('fee-service-select')?.value;
             const amount = parseFloat(document.getElementById('fee-amount-input')?.value) || 0;
             if (!serviceKey) return;
@@ -146,7 +191,7 @@
             document.getElementById('fee-result').textContent = `${fee.toLocaleString()} TZS`;
         }
 
-        function createTrackerHTML(activeStage = 1) {
+        window.createTrackerHTML = function(activeStage = 1) {
             const stages = ['Initiated', 'Processing', 'Sent', 'Completed'];
             const icons = ['fa-check', 'fa-cogs', 'fa-paper-plane', 'fa-flag-checkered'];
             let html = '<div class="flex justify-between items-start text-center text-xs sm:text-sm pt-8">';
@@ -165,7 +210,7 @@
             return html;
         }
 
-        function openActionModal(action, stage = 1, title = '') {
+        window.openActionModal = function(action, stage = 1, title = '') {
             const modal = document.getElementById('quickActionModal');
             const contentContainer = document.getElementById('modal-content');
             let content = '';
@@ -204,6 +249,9 @@
                         const iconClass = action === 'wakalaProfile' ? 'fa-user-tie' : 'fa-user';
                         content = `<div class="text-center"><div class="w-24 h-24 rounded-full bg-blue-100 mx-auto flex items-center justify-center mb-4"><i class="fas ${iconClass} text-4xl text-blue-500"></i></div><h3 class="font-bold text-2xl">${name}</h3><p class="text-gray-500">${detail}</p>${rating ? `<div class="text-2xl my-4">${stars}</div>` : ''}<button onclick="closeActionModal()" class="mt-6 w-full py-3 bg-blue-600 text-white rounded-lg">Close</button></div>`;
                         break;
+                    case 'developerProfile':
+                         content = `<div class="text-center"><div class="w-24 h-24 rounded-full bg-gray-700 mx-auto flex items-center justify-center mb-4"><i class="fas fa-code text-4xl text-white"></i></div><h3 class="font-bold text-2xl">David Mbazza</h3><p class="text-gray-500">Full-Stack Developer</p><div class="text-left mt-6 space-y-2"><p><i class="fas fa-phone-alt w-6 text-blue-500"></i> 0786670928</p><p><i class="fas fa-envelope w-6 text-blue-500"></i> davidmbazza@gmail.com</p></div><button onclick="closeActionModal()" class="mt-6 w-full py-3 bg-blue-600 text-white rounded-lg">Close</button></div>`;
+                         break;
                     default:
                         content = `<h3 class="font-bold text-xl mb-4">${title}</h3><p>This service flow for '${title}' would continue here.</p><button onclick="openActionModal('${action}', 'confirm', '${title}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-lg">Continue</button>`;
                 }
@@ -213,13 +261,13 @@
             modal.classList.add('flex');
         }
 
-        function closeActionModal() {
+        window.closeActionModal = function() {
             const modal = document.getElementById('quickActionModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
         
-        function toggleAccordion(element) {
+        window.toggleAccordion = function(element) {
             const content = element.nextElementSibling;
             const icon = element.querySelector('i.fa-chevron-down');
             if (content.style.maxHeight) {
@@ -233,7 +281,7 @@
             }
         }
 
-        function navigateTo(section, stage = 1) {
+        window.navigateTo = function(section, stage = 1) {
             let content = '';
             let pageTitle = section.charAt(0).toUpperCase() + section.slice(1);
 
@@ -329,7 +377,9 @@
                     break;
                 case 'transactions':
                     pageTitle = "Transactions";
-                    content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><div class="flex flex-wrap justify-between items-center mb-4 gap-4"><h3 class="font-bold text-lg">Transaction History</h3><div class="flex items-center space-x-2"><input type="text" id="datepicker" placeholder="Select date range" class="p-2 border rounded-lg"><button class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300">Filter</button><button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><i class="fas fa-print mr-2"></i>Print Statement</button></div></div><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="border-b"><th class="p-4">Date</th><th class="p-4">Description</th><th class="p-4">Amount</th><th class="p-4">Status</th></tr></thead><tbody><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jul 1, 2025</td><td class="p-4 font-semibold">Netflix Subscription</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="15.99">-$15.99</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 30, 2025</td><td class="p-4 font-semibold">Work Deposit</td><td class="p-4 font-semibold text-green-600 money-value" data-usd-value="2500.00">+$2,500.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 29, 2025</td><td class="p-4 font-semibold">Starbucks Coffee</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="5.75">-$5.75</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 28, 2025</td><td class="p-4 font-semibold">Transfer to Jane Doe</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="200.00">-$200.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Pending</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 27, 2025</td><td class="p-4 font-semibold">ATM Cash Out</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="100.00">-$100.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Failed</span></td></tr></tbody></table></div></div>`;
+                    content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><div class="flex flex-wrap justify-between items-center mb-4 gap-4"><h3 class="font-bold text-lg">Transaction History</h3><div class="flex items-center space-x-2"><input type="text" id="datepicker" placeholder="Select date range" class="p-2 border rounded-lg"><button class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300">Filter</button><button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><i class="fas fa-print mr-2"></i>Print Statement</button></div></div>
+                    <div id="transaction-tracker" class="mb-8"></div>
+                    <div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="border-b"><th class="p-4">Date</th><th class="p-4">Description</th><th class="p-4">Amount</th><th class="p-4">Status</th></tr></thead><tbody><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jul 1, 2025</td><td class="p-4 font-semibold">Netflix Subscription</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="15.99">-$15.99</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 30, 2025</td><td class="p-4 font-semibold">Work Deposit</td><td class="p-4 font-semibold text-green-600 money-value" data-usd-value="2500.00">+$2,500.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 29, 2025</td><td class="p-4 font-semibold">Starbucks Coffee</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="5.75">-$5.75</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 28, 2025</td><td class="p-4 font-semibold">Transfer to Jane Doe</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="200.00">-$200.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Pending</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-4 text-sm text-gray-600">Jun 27, 2025</td><td class="p-4 font-semibold">ATM Cash Out</td><td class="p-4 font-semibold text-red-600 money-value" data-usd-value="100.00">-$100.00</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Failed</span></td></tr></tbody></table></div></div>`;
                     break;
                 case 'analytics':
                     pageTitle = "Analytics & Tariffs";
@@ -404,15 +454,15 @@
                 case 'international':
                     pageTitle = "International Money Transfer";
                     if (stage === 1) {
-                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-4">Send Money Globally</h3><p class="text-gray-600 mb-6">Transfer funds from Tanzania to the United Kingdom.</p><form class="space-y-4" onsubmit="return false;"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block mb-1 text-sm font-medium">You Send (TZS)</label><input type="number" id="amount-tzs" placeholder="e.g., 250,000" class="w-full p-3 border rounded-lg" oninput="calculateTransfer()"></div><div><label class="block mb-1 text-sm font-medium">Recipient Gets (approx.)</label><input type="text" id="recipient-gets" placeholder="0.00 GBP" class="w-full p-3 border rounded-lg bg-gray-100" disabled></div></div><p class="text-sm text-gray-500">Exchange Rate: 1 GBP ≈ ${(1/TZS_TO_GBP_RATE).toLocaleString()} TZS | Fee: <span id="transfer-fee">0 TZS</span></p><div><label class="block mb-2 text-sm font-medium">How should they receive it?</label><div class="flex space-x-4"><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="bank" onchange="handleDeliveryMethodChange('bank')" class="mr-2"> To a Bank Account</label><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="mobile" onchange="handleDeliveryMethodChange('mobile')" class="mr-2"> To a Mobile Wallet</label></div></div><div id="bank-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Bank Account Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="text" placeholder="IBAN" class="w-full p-3 border rounded-lg"><input type="text" placeholder="SWIFT/BIC Code" class="w-full p-3 border rounded-lg"></div><div id="mobile-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Mobile Wallet Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="tel" placeholder="Recipient Mobile Number (e.g., +44...)" class="w-full p-3 border rounded-lg"></div><button onclick="navigateTo('international', 2)" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg">Continue Transfer</button></form></div><div class="mt-8 bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-6">Track Your Transfer</h3><div class="flex justify-between items-center text-center text-xs sm:text-sm pt-8"><div class="tracker-item completed flex-1"><div class="tracker-dot"><i class="fas fa-check"></i></div><div class="tracker-line"></div><div class="absolute -bottom-6">Initiated</div></div><div class="tracker-item active flex-1"><div class="tracker-dot"><i class="fas fa-cogs"></i></div><div class="tracker-line"></div><div class="absolute -bottom-6 font-bold">Processing</div></div><div class="tracker-item pending flex-1"><div class="tracker-dot"><i class="fas fa-paper-plane"></i></div><div class="tracker-line"></div><div class="absolute -bottom-6">Sent</div></div><div class="tracker-item pending"><div class="tracker-dot"><i class="fas fa-flag-checkered"></i></div><div class="absolute -bottom-6">Completed</div></div></div></div><div class="mt-8 bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-4">Recent International Transfers</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="border-b"><th class="p-3">Date</th><th class="p-3">Recipient</th><th class="p-3">Country</th><th class="p-3">Amount Sent</th><th class="p-3">Status</th></tr></thead><tbody><tr class="border-b hover:bg-gray-50"><td class="p-3 text-sm">25 Jun 2025</td><td class="p-3 font-semibold">John Smith</td><td class="p-3 text-sm">UK</td><td class="p-3 font-semibold">516,100 TZS</td><td class="p-3"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr><tr class="border-b hover:bg-gray-50"><td class="p-3 text-sm">15 May 2025</td><td class="p-3 font-semibold">Jane Doe</td><td class="p-3 text-sm">UK</td><td class="p-3 font-semibold">1,290,250 TZS</td><td class="p-3"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Completed</span></td></tr></tbody></table></div></div>`;
+                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-4">Send Money Globally</h3><p class="text-gray-600 mb-6">Transfer funds from Tanzania to anywhere in the world.</p><form class="space-y-4" onsubmit="return false;"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label id="you-send-label" class="block mb-1 text-sm font-medium">You Send (USD)</label><input type="number" id="amount-intl" placeholder="e.g., 100" class="w-full p-3 border rounded-lg" oninput="calculateTransfer()"></div><div><label class="block mb-1 text-sm font-medium">Recipient Country</label><select id="country-select-intl" class="w-full p-3 border rounded-lg" onchange="calculateTransfer()"><option value="GBP">United Kingdom (GBP)</option><option value="KES">Kenya (KES)</option><option value="USD">United States (USD)</option></select></div></div><p class="text-sm text-gray-500">Recipient Gets (approx.): <span id="recipient-gets" class="font-semibold">0.00 GBP</span> | Fee: <span id="transfer-fee" class="font-semibold">0 USD</span></p><div><label class="block mb-2 text-sm font-medium">How should they receive it?</label><div class="flex space-x-4"><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="bank" onchange="handleDeliveryMethodChange('bank')" class="mr-2"> To a Bank Account</label><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="mobile" onchange="handleDeliveryMethodChange('mobile')" class="mr-2"> To a Mobile Wallet</label></div></div><div id="bank-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Bank Account Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="text" placeholder="IBAN" class="w-full p-3 border rounded-lg"><input type="text" placeholder="SWIFT/BIC Code" class="w-full p-3 border rounded-lg"></div><div id="mobile-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Mobile Wallet Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="tel" placeholder="Recipient Mobile Number" class="w-full p-3 border rounded-lg"></div><button onclick="navigateTo('international', 2)" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg">Continue Transfer</button></form></div>`;
                     } else if (stage === 2) {
                         const data = getTransferData();
                         const amountNum = parseFloat(data.amount) || 0;
-                        const feeNum = TRANSFER_FEE_TZS;
+                        const feeNum = TRANSFER_FEE_USD;
                         const totalNum = amountNum + feeNum;
-                        const receivedNum = amountNum * TZS_TO_GBP_RATE;
+                        const receivedNum = amountNum * RATES.USD_GBP;
                         pageTitle = "Confirm Your Transfer";
-                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter max-w-2xl mx-auto"><h3 class="font-bold text-2xl mb-2 text-center">Confirm & Send</h3><p class="text-gray-600 mb-6 text-center">Please review the details below before confirming.</p><div class="bg-gray-50 p-4 rounded-lg space-y-3"><div class="flex justify-between"><dt class="text-gray-600">You are sending:</dt><dd class="font-bold text-lg">${amountNum.toLocaleString()} TZS</dd></div><div class="flex justify-between"><dt class="text-gray-600">Transfer Fee:</dt><dd class="font-semibold">+ ${feeNum.toLocaleString()} TZS</dd></div><hr><div class="flex justify-between"><dt class="text-gray-600">Total to Pay:</dt><dd class="font-bold text-xl text-blue-600">${totalNum.toLocaleString()} TZS</dd></div></div><div class="mt-6"><h4 class="font-semibold mb-2">Recipient Details</h4><dl class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm"><div class="flex justify-between"><dt class="text-gray-600">Name:</dt><dd class="font-semibold">${data.recipientName || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Receives (approx.):</dt><dd class="font-semibold">${receivedNum.toFixed(2)} GBP</dd></div><div class="flex justify-between"><dt class="text-gray-600">Delivery Method:</dt><dd class="font-semibold">${data.deliveryMethod || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Account/Mobile:</dt><dd class="font-semibold">${data.recipientDetail || 'N/A'}</dd></div></dl></div><div class="mt-6 flex space-x-4"><button onclick="navigateTo('international', 1)" class="w-full py-3 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold">Go Back</button><button class="w-full py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold">Confirm & Send</button></div></div>`;
+                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter max-w-2xl mx-auto"><h3 class="font-bold text-2xl mb-2 text-center">Confirm & Send</h3><p class="text-gray-600 mb-6 text-center">Please review the details below before confirming.</p><div class="bg-gray-50 p-4 rounded-lg space-y-3"><div class="flex justify-between"><dt class="text-gray-600">You are sending:</dt><dd class="font-bold text-lg">${amountNum.toLocaleString()} ${data.sendCurrency}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Transfer Fee:</dt><dd class="font-semibold">+ ${feeNum.toLocaleString()} ${data.sendCurrency}</dd></div><hr><div class="flex justify-between"><dt class="text-gray-600">Total to Pay:</dt><dd class="font-bold text-xl text-blue-600">${totalNum.toLocaleString()} ${data.sendCurrency}</dd></div></div><div class="mt-6"><h4 class="font-semibold mb-2">Recipient Details</h4><dl class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm"><div class="flex justify-between"><dt class="text-gray-600">Name:</dt><dd class="font-semibold">${data.recipientName || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Receives (approx.):</dt><dd class="font-semibold">${data.recipientGets}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Delivery Method:</dt><dd class="font-semibold">${data.deliveryMethod || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Account/Mobile:</dt><dd class="font-semibold">${data.recipientDetail || 'N/A'}</dd></div></dl></div><div class="mt-6 flex space-x-4"><button onclick="navigateTo('international', 1)" class="w-full py-3 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold">Go Back</button><button onclick="executeTransfer()" class="w-full py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold">Confirm & Send</button></div></div>`;
                     }
                     break;
                 case 'services-detail':
@@ -430,6 +480,9 @@
             }
             if (section === 'transactions') {
                 new Litepicker({ element: document.getElementById('datepicker'), singleMode: false });
+            }
+            if (section === 'international' && stage === 1) {
+                calculateTransfer();
             }
         }
 
@@ -494,6 +547,77 @@
             settingsModal.classList.toggle("hidden", !show);
             settingsModal.classList.toggle("flex", show);
         }
+        
+        window.calculateTransfer = function() {
+            const sendAmount = parseFloat(document.getElementById('amount-intl')?.value) || 0;
+            const sendCurrency = document.getElementById('currency-select')?.value || 'USD';
+            const receiveCurrency = document.getElementById('country-select-intl')?.value || 'GBP';
+            
+            const youSendLabel = document.getElementById('you-send-label');
+            if(youSendLabel) youSendLabel.textContent = `You Send (${sendCurrency})`;
+
+            let rateKey = `${sendCurrency}_${receiveCurrency}`;
+            let conversionRate = RATES[rateKey] || 1;
+            
+            let recipientGets = sendAmount * conversionRate;
+            let fee = sendCurrency === 'USD' ? TRANSFER_FEE_USD : TRANSFER_FEE_USD * TZS_RATE;
+
+            if(document.getElementById('recipient-gets')) document.getElementById('recipient-gets').textContent = `${recipientGets.toFixed(2)} ${receiveCurrency}`;
+            if(document.getElementById('transfer-fee')) document.getElementById('transfer-fee').textContent = `${fee.toLocaleString()} ${sendCurrency}`;
+        }
+        
+        window.handleDeliveryMethodChange = function(method) {
+            const bankDetails = document.getElementById('bank-details');
+            const mobileDetails = document.getElementById('mobile-details');
+            if (bankDetails && mobileDetails) {
+                if (method === 'bank') {
+                    bankDetails.style.maxHeight = bankDetails.scrollHeight + "px";
+                    mobileDetails.style.maxHeight = '0px';
+                } else {
+                    mobileDetails.style.maxHeight = mobileDetails.scrollHeight + "px";
+                    bankDetails.style.maxHeight = '0px';
+                }
+            }
+        }
+        
+        window.getTransferData = function() {
+            const data = {};
+            data.amount = document.getElementById('amount-intl')?.value || '0';
+            data.sendCurrency = document.getElementById('currency-select')?.value || 'USD';
+            data.recipientGets = document.getElementById('recipient-gets')?.textContent || '0.00';
+            const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
+            if (deliveryMethod) {
+                data.deliveryMethod = deliveryMethod.value === 'bank' ? 'Bank Account' : 'Mobile Wallet';
+                if (deliveryMethod.value === 'bank') {
+                    data.recipientName = document.querySelector('#bank-details input[placeholder="Recipient Full Name"]')?.value;
+                    data.recipientDetail = document.querySelector('#bank-details input[placeholder="IBAN"]')?.value;
+                } else {
+                    data.recipientName = document.querySelector('#mobile-details input[placeholder="Recipient Full Name"]')?.value;
+                    data.recipientDetail = document.querySelector('#mobile-details input[placeholder="Recipient Mobile Number"]')?.value;
+                }
+            }
+            return data;
+        }
+
+        window.executeTransfer = function() {
+            openActionModal('international', 'track', 'International Transfer');
+            setTimeout(() => {
+                closeActionModal();
+                navigateTo('transactions');
+                setTimeout(() => {
+                    const trackerDiv = document.getElementById('transaction-tracker');
+                    if(trackerDiv) {
+                        trackerDiv.innerHTML = `<h3 class="font-bold text-xl mb-6">Tracking Your Latest Transfer</h3>${createTrackerHTML(1)}`;
+                        let stage = 1;
+                        const interval = setInterval(() => {
+                            stage++;
+                            trackerDiv.innerHTML = `<h3 class="font-bold text-xl mb-6">Tracking Your Latest Transfer</h3>${createTrackerHTML(stage)}`;
+                            if (stage >= 4) clearInterval(interval);
+                        }, 2000);
+                    }
+                }, 100);
+            }, 1000);
+        }
 
         // --- Event Listeners and Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -505,8 +629,9 @@
 
             chatToggleBtn.addEventListener("click", () => {
                 chatbox.classList.remove("hidden");
+                chatbox.classList.remove("scale-0", "opacity-0");
+                chatbox.classList.add("flex"); // Make it a flex container
                 setTimeout(() => {
-                    chatbox.classList.remove("scale-0", "opacity-0");
                     chatbox.classList.add("scale-100", "opacity-100");
                 }, 10);
             });
@@ -514,10 +639,18 @@
             closeChatBtn.addEventListener("click", () => {
                 chatbox.classList.add("scale-0", "opacity-0");
                 chatbox.classList.remove("scale-100", "opacity-100");
-                setTimeout(() => chatbox.classList.add("hidden"), 300);
+                setTimeout(() => {
+                    chatbox.classList.add("hidden");
+                    chatbox.classList.remove("flex");
+                }, 300);
             });
 
-            document.getElementById("currency-select")?.addEventListener("change", updateCurrencyDisplay);
+            document.getElementById("currency-select")?.addEventListener("change", () => {
+                updateCurrencyDisplay();
+                if(document.getElementById('amount-intl')) {
+                    calculateTransfer();
+                }
+            });
             navigateTo('dashboard');
         });
     </script>
