@@ -45,9 +45,23 @@
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
 
     <div class="flex flex-1 flex-col md:flex-row">
+        <!-- Mobile Header -->
+        <div id="mobile-header" class="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-30 p-4 flex justify-between items-center">
+            <button onclick="toggleSidebar()" class="text-gray-700 text-2xl focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="text-xl font-bold text-blue-600">SuperApp</h1>
+            <div class="text-right">
+                <div class="font-bold text-lg text-green-600 money-value" data-usd-value="1250.00">$1,250.00</div>
+            </div>
+        </div>
+
+        <!-- Sidebar Backdrop (for mobile) -->
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+
         <!-- Sidebar -->
         <aside id="sidebar" class="bg-white w-64 p-4 flex-shrink-0 shadow-lg fixed md:static inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0">
-            <div class="flex items-center justify-center mb-6">
+            <div class="flex items-center justify-center mb-6 pt-16 md:pt-0">
                  <h1 class="text-2xl font-bold text-blue-600 hidden md:block">SuperApp</h1>
             </div>
             <nav id="sidebar-nav" class="space-y-2">
@@ -84,7 +98,7 @@
                     <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl cursor-pointer" onclick="toggleSettingsModal(true)">DM</div>
                 </div>
             </header>
-            <main class="p-4 md:p-6 lg:p-8 flex-1 overflow-auto" id="main-content"></main>
+            <main class="p-4 md:p-6 lg:p-8 flex-1 overflow-auto pt-24 md:pt-8" id="main-content"></main>
         </div>
     </div>
     
@@ -454,19 +468,19 @@
                 case 'international':
                     pageTitle = "International Money Transfer";
                     if (stage === 1) {
-                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-4">Send Money Globally</h3><p class="text-gray-600 mb-6">Transfer funds from Tanzania to anywhere in the world.</p><form class="space-y-4" onsubmit="return false;"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label id="you-send-label" class="block mb-1 text-sm font-medium">You Send (USD)</label><input type="number" id="amount-intl" placeholder="e.g., 100" class="w-full p-3 border rounded-lg" oninput="calculateTransfer()"></div><div><label class="block mb-1 text-sm font-medium">Recipient Country</label><select id="country-select-intl" class="w-full p-3 border rounded-lg" onchange="calculateTransfer()"><option value="GBP">United Kingdom (GBP)</option><option value="KES">Kenya (KES)</option><option value="USD">United States (USD)</option></select></div></div><p class="text-sm text-gray-500">Recipient Gets (approx.): <span id="recipient-gets" class="font-semibold">0.00 GBP</span> | Fee: <span id="transfer-fee" class="font-semibold">0 USD</span></p><div><label class="block mb-2 text-sm font-medium">How should they receive it?</label><div class="flex space-x-4"><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="bank" onchange="handleDeliveryMethodChange('bank')" class="mr-2"> To a Bank Account</label><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="mobile" onchange="handleDeliveryMethodChange('mobile')" class="mr-2"> To a Mobile Wallet</label></div></div><div id="bank-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Bank Account Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="text" placeholder="IBAN" class="w-full p-3 border rounded-lg"><input type="text" placeholder="SWIFT/BIC Code" class="w-full p-3 border rounded-lg"></div><div id="mobile-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Mobile Wallet Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="tel" placeholder="Recipient Mobile Number" class="w-full p-3 border rounded-lg"></div><button onclick="navigateTo('international', 2)" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg">Continue Transfer</button></form></div>`;
+                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h3 class="font-bold text-xl mb-4">Send Money Globally</h3><p class="text-gray-600 mb-6">Transfer funds from your account to anywhere in the world.</p><form class="space-y-4" onsubmit="return false;"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label id="you-send-label" class="block mb-1 text-sm font-medium">You Send (USD)</label><input type="number" id="amount-intl" placeholder="e.g., 100" class="w-full p-3 border rounded-lg" oninput="calculateTransfer()"></div><div><label class="block mb-1 text-sm font-medium">Recipient Country</label><select id="country-select-intl" class="w-full p-3 border rounded-lg" onchange="calculateTransfer()"><option value="GBP">United Kingdom (GBP)</option><option value="KES">Kenya (KES)</option><option value="USD">United States (USD)</option></select></div></div><p class="text-sm text-gray-500">Recipient Gets (approx.): <span id="recipient-gets" class="font-semibold">0.00 GBP</span> | Fee: <span id="transfer-fee" class="font-semibold">0 USD</span></p><div><label class="block mb-2 text-sm font-medium">How should they receive it?</label><div class="flex space-x-4"><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="bank" onchange="handleDeliveryMethodChange('bank')" class="mr-2"> To a Bank Account</label><label class="flex items-center p-3 border rounded-lg flex-1 cursor-pointer"><input type="radio" name="deliveryMethod" value="mobile" onchange="handleDeliveryMethodChange('mobile')" class="mr-2"> To a Mobile Wallet</label></div></div><div id="bank-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Bank Account Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="text" placeholder="IBAN" class="w-full p-3 border rounded-lg"><input type="text" placeholder="SWIFT/BIC Code" class="w-full p-3 border rounded-lg"></div><div id="mobile-details" class="space-y-4 recipient-details"><h4 class="font-semibold pt-2">Mobile Wallet Details</h4><input type="text" placeholder="Recipient Full Name" class="w-full p-3 border rounded-lg"><input type="tel" placeholder="Recipient Mobile Number" class="w-full p-3 border rounded-lg"></div><button onclick="navigateTo('international', 2)" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg">Continue Transfer</button></form></div>`;
                     } else if (stage === 2) {
                         const data = getTransferData();
+                        const fee = data.sendCurrency === 'USD' ? TRANSFER_FEE_USD : TRANSFER_FEE_USD * TZS_RATE;
                         const amountNum = parseFloat(data.amount) || 0;
-                        const feeNum = TRANSFER_FEE_USD;
-                        const totalNum = amountNum + feeNum;
+                        const totalNum = amountNum + fee;
                         pageTitle = "Confirm Your Transfer";
-                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter max-w-2xl mx-auto"><h3 class="font-bold text-2xl mb-2 text-center">Confirm & Send</h3><p class="text-gray-600 mb-6 text-center">Please review the details below before confirming.</p><div class="bg-gray-50 p-4 rounded-lg space-y-3"><div class="flex justify-between"><dt class="text-gray-600">You are sending:</dt><dd class="font-bold text-lg">${amountNum.toLocaleString()} ${data.sendCurrency}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Transfer Fee:</dt><dd class="font-semibold">+ ${feeNum.toLocaleString()} ${data.sendCurrency}</dd></div><hr><div class="flex justify-between"><dt class="text-gray-600">Total to Pay:</dt><dd class="font-bold text-xl text-blue-600">${totalNum.toLocaleString()} ${data.sendCurrency}</dd></div></div><div class="mt-6"><h4 class="font-semibold mb-2">Recipient Details</h4><dl class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm"><div class="flex justify-between"><dt class="text-gray-600">Name:</dt><dd class="font-semibold">${data.recipientName || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Receives (approx.):</dt><dd class="font-semibold">${data.recipientGets}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Delivery Method:</dt><dd class="font-semibold">${data.deliveryMethod || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Account/Mobile:</dt><dd class="font-semibold">${data.recipientDetail || 'N/A'}</dd></div></dl></div><div class="mt-6 flex space-x-4"><button onclick="navigateTo('international', 1)" class="w-full py-3 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold">Go Back</button><button onclick="executeTransfer()" class="w-full py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold">Confirm & Send</button></div></div>`;
+                        content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter max-w-2xl mx-auto"><h3 class="font-bold text-2xl mb-2 text-center">Confirm & Send</h3><p class="text-gray-600 mb-6 text-center">Please review the details below before confirming.</p><div class="bg-gray-50 p-4 rounded-lg space-y-3"><div class="flex justify-between"><dt class="text-gray-600">You are sending:</dt><dd class="font-bold text-lg">${amountNum.toLocaleString()} ${data.sendCurrency}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Transfer Fee:</dt><dd class="font-semibold">+ ${fee.toLocaleString()} ${data.sendCurrency}</dd></div><hr><div class="flex justify-between"><dt class="text-gray-600">Total to Pay:</dt><dd class="font-bold text-xl text-blue-600">${totalNum.toLocaleString()} ${data.sendCurrency}</dd></div></div><div class="mt-6"><h4 class="font-semibold mb-2">Recipient Details</h4><dl class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm"><div class="flex justify-between"><dt class="text-gray-600">Name:</dt><dd class="font-semibold">${data.recipientName || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Receives (approx.):</dt><dd class="font-semibold">${data.recipientGets}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Delivery Method:</dt><dd class="font-semibold">${data.deliveryMethod || 'N/A'}</dd></div><div class="flex justify-between"><dt class="text-gray-600">Account/Mobile:</dt><dd class="font-semibold">${data.recipientDetail || 'N/A'}</dd></div></dl></div><div class="mt-6 flex space-x-4"><button onclick="navigateTo('international', 1)" class="w-full py-3 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold">Go Back</button><button onclick="executeTransfer()" class="w-full py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold">Confirm & Send</button></div></div>`;
                     }
                     break;
                 case 'services-detail':
                     pageTitle = stage;
-                    content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h2 class="text-2xl font-bold mb-4">${stage}</h2><p>Detailed content and forms for the '${stage}' service would appear here, followed by the standard payment process flow.</p><button onclick="openActionModal('default', 'confirm', '${stage}')" class="mt-4 w-full py-3 bg-blue-600 text-white rounded-lg">Initiate Service</button></div>`;
+                    content = `<div class="bg-white p-6 rounded-xl shadow-lg card-enter"><h2 class="text-2xl font-bold mb-4">${stage}</h2><p>Detailed content and forms for the '${stage}' service would appear here, followed by the standard payment process flow.</p><button onclick="openActionModal('default', 'confirm', '${stage}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-lg">Initiate Service</button></div>`;
                     break;
             }
 
@@ -617,10 +631,17 @@
                 }, 100);
             }, 1000);
         }
+        
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById("sidebar");
+            const backdrop = document.getElementById("sidebar-backdrop");
+            sidebar.classList.toggle("-translate-x-full");
+            backdrop.classList.toggle("hidden");
+        }
 
         // --- Event Listeners and Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelector(".md\\:hidden.flex.justify-between.items-center.bg-white.shadow-md.px-4.py-3.z-30 > button")?.addEventListener("click", () => document.getElementById("sidebar").classList.toggle("-translate-x-full"));
+            document.getElementById("sidebar-backdrop")?.addEventListener("click", toggleSidebar);
             
             const chatbox = document.getElementById("chatbox");
             const chatToggleBtn = document.getElementById("chatToggleBtn");
